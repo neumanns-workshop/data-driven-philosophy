@@ -44,8 +44,43 @@ def load_data(file_path):
 def load_embeddings(embeddings_path):
     """Load pre-computed embeddings for semantic search."""
     try:
-        with open(embeddings_path, 'rb') as f:
-            return pickle.load(f)
+        # Check if we have a single embeddings file
+        if os.path.exists(embeddings_path):
+            with open(embeddings_path, 'rb') as f:
+                return pickle.load(f)
+        
+        # Check if we have chunked embeddings
+        chunks_dir = os.path.join(os.path.dirname(embeddings_path), "chunks")
+        if os.path.exists(chunks_dir):
+            # Find all chunk files
+            chunk_files = [f for f in os.listdir(chunks_dir) if f.startswith("embeddings_chunk_") and f.endswith(".pkl")]
+            if not chunk_files:
+                return None
+            
+            # Sort to ensure correct order
+            chunk_files.sort()
+            
+            # Load and combine chunks
+            combined_embeddings = []
+            combined_ids = []
+            
+            for chunk_file in chunk_files:
+                with open(os.path.join(chunks_dir, chunk_file), 'rb') as f:
+                    chunk_data = pickle.load(f)
+                
+                combined_embeddings.append(chunk_data['embeddings'])
+                combined_ids.extend(chunk_data['ids'])
+            
+            # Concatenate embeddings
+            combined_embeddings = np.vstack(combined_embeddings)
+            
+            # Create combined data
+            return {
+                'embeddings': combined_embeddings,
+                'ids': combined_ids
+            }
+        
+        return None
     except FileNotFoundError:
         return None
 
@@ -232,9 +267,20 @@ def main():
     st.sidebar.header("Dataset Information")
     st.sidebar.write(f"Available subreddits: {len(subreddits)}")
     st.sidebar.write(f"Available categories: {len(categories)}")
-    st.sidebar.write("Data Range:")
-    st.sidebar.write(f"Min date: {df['datetime'].min().date()}")
-    st.sidebar.write(f"Max date: {df['datetime'].max().date()}")
+    st.sidebar.write(f"From: {df['datetime'].min().date()}")
+    st.sidebar.write(f"To: {df['datetime'].max().date()}")
+
+    # Add author information
+    st.sidebar.markdown("---")
+    st.sidebar.markdown("### About the Author")
+    st.sidebar.markdown("""
+    **Jared Neumann**  
+    AI Consultant specializing in generative AI and natural language processing
+    
+    Neumann's Workshop provides tailored AI solutions, research support, and educational resources for individuals and organizations.
+    
+    [Email](mailto:jared@neumannsworkshop.com) | [GitHub](https://github.com/neumanns-workshop) | [Website](https://neumannsworkshop.com/)
+    """)
     
     # Add data compliance notice
     st.sidebar.markdown("---")
@@ -255,17 +301,18 @@ def main():
         If you are a content creator and wish to have your content removed, please contact the repository owner.
         """)
     
-    # Add author information
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("### About the Author")
-    st.sidebar.markdown("""
-    **Jared Neumann**  
-    AI Consultant specializing in generative AI and natural language processing
-    
-    Neumann's Workshop provides tailored AI solutions, research support, and educational resources for individuals and organizations.
-    
-    [Email](mailto:jared@neumannsworkshop.com) | [GitHub](https://github.com/neumanns-workshop) | [Website](https://neumannsworkshop.com/)
-    """)
+    # Add models information
+    with st.sidebar.expander("Models Used"):
+        st.markdown("""
+        **Categorization Model**  
+        [ruggsea/Llama3-stanford-encyclopedia-philosophy-QA](https://huggingface.co/ruggsea/Llama3-stanford-encyclopedia-philosophy-QA)
+        
+        **Semantic Search Model**  
+        [all-mpnet-base-v2](https://huggingface.co/sentence-transformers/all-mpnet-base-v2)
+        
+        **Dimensionality Reduction**  
+        Principal Component Analysis (PCA)
+        """)
     
     # Basic stats
     st.header("Basic Statistics")

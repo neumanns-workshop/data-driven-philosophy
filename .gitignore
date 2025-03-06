@@ -56,10 +56,11 @@ datasets/
 # Allow our specific app files
 !app.py
 !generate_filtered_visualizations.py
+!split_embeddings.py
 !requirements.txt
 !README.md
 !data/phil_questions_enhanced.jsonl
-!data/question_embeddings_enhanced.pkl
+!data/chunks/embeddings_chunk_*.pkl
 !visualizations/filtered/*.html
 
 # Model output directories
