@@ -35,7 +35,7 @@ ENV/
 *.swp
 *.swo
 
-# Data folders and files
+# Data folders and files - EXCEPT our app data
 datasets/
 *.csv
 *.jsonl
@@ -52,6 +52,15 @@ datasets/
 *.jpeg
 *.gif
 *.pdf
+
+# Allow our specific app files
+!app.py
+!generate_filtered_visualizations.py
+!requirements.txt
+!README.md
+!data/phil_questions_enhanced.jsonl
+!data/question_embeddings_enhanced.pkl
+!visualizations/filtered/*.html
 
 # Model output directories
 topic_models/
